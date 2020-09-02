@@ -43,6 +43,8 @@ bool manualButton = 0;
 bool alertsOn = 0;
 long lastDebounceTime = 0;
 long debounceDelay = 150;
+int wifisignal = 0;
+String displaycurrenttimepluswifi;
 
 void turnOn()
 {
@@ -58,6 +60,7 @@ void turnOff()
 {
   digitalWrite(SONOFF_RELAY_PIN, LOW);
   digitalWrite(SONOFF_LED, HIGH);
+  manualButton = 0;
   Blynk.virtualWrite(V1, 0);
   statusLED.off();
   if(alertsOn)
@@ -94,6 +97,11 @@ ICACHE_RAM_ATTR void notifyOnButtonPress()
   }
 }
 
+void timer_V2() // Things to do every minute.
+{
+  Blynk.syncVirtual(V2);
+}
+
 void requestTime()
 {
   Blynk.sendInternal("rtc", "sync");
@@ -107,7 +115,7 @@ BLYNK_WRITE(V0) // Alerts On or Off
     alertsOn = 0;
 }
 
-BLYNK_WRITE(V1) // LED Button Press
+BLYNK_WRITE(V1) // In App Button Press
 {       
     if (param.asInt() == 1)
     {
@@ -123,43 +131,32 @@ BLYNK_WRITE(V1) // LED Button Press
 
 BLYNK_WRITE(V2) {
   TimeInputParam t(param);
-  int today = (weekday(now())+6)%7;  //Time library starts week on Sunday, Blynk on Monday  
+  int today = (weekday()+6)%7;  //Time library starts week on Sunday, Blynk on Monday  
   if(today == 0)
     today = 7;
-  unsigned int nowseconds = now() % 86400;
+
+  unsigned int nowseconds = ((hour() * 3600) + (minute() * 60) + second());
   unsigned int startseconds = (t.getStartHour() * 3600) + (t.getStartMinute() * 60);  
   unsigned int stopseconds = (t.getStopHour() * 3600) + (t.getStopMinute() * 60);
+
   if(t.isWeekdaySelected(today))
-  { 
-    if(nowseconds >= startseconds - 31 && nowseconds <= startseconds + 31 )
+  {
+    if(relayState == LOW)
     {
-      Blynk.setProperty(V10, "color", BLYNK_BLUE);
-      statusLED.on();
-      turnOn();
-    }                  
-    if(nowseconds >= stopseconds - 31 && nowseconds <= stopseconds + 31 )
-    {
-      turnOff();
+      if(nowseconds >= startseconds - 31 && nowseconds <= startseconds + 31 )
+      {
+        Blynk.setProperty(V10, "color", BLYNK_BLUE);
+        statusLED.on();
+        turnOn();
+      }
     }
-    if (t.isStartSunrise())
+
+    if(relayState == HIGH)
     {
-      Blynk.setProperty(V10, "color", BLYNK_BLUE);
-      statusLED.on();
-      turnOn();
-    }
-    if (t.isStartSunset())
-    {
-      Blynk.setProperty(V10, "color", BLYNK_BLUE);
-      statusLED.on();
-      turnOn();
-    }
-    if (t.isStopSunrise())
-    {
-      turnOff();
-    }
-    if (t.isStopSunset())
-    {
-      turnOff();
+      if(nowseconds >= stopseconds - 31 && nowseconds <= stopseconds + 31 )
+      {
+        turnOff();
+      }
     }
   }
 }
@@ -169,7 +166,7 @@ void setup() {
   digitalWrite(SONOFF_LED, HIGH);
 
   pinMode(SONOFF_RELAY_PIN, OUTPUT);
-  digitalWrite(SONOFF_RELAY_PIN, LOW);
+  digitalWrite(SONOFF_RELAY_PIN, relayState);
 
   pinMode(SONOFF_BUTTON, INPUT);
 
@@ -211,11 +208,13 @@ void setup() {
 
   timer.setInterval(3600000L, requestTime);
 
+  timer.setInterval(  60000L, timer_V2);
+  
   attachInterrupt(digitalPinToInterrupt(SONOFF_BUTTON), notifyOnButtonPress, CHANGE);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop()
+{
   Blynk.run();
 
   timer.run();
