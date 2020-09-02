@@ -43,8 +43,6 @@ bool manualButton = 0;
 bool alertsOn = 0;
 long lastDebounceTime = 0;
 long debounceDelay = 150;
-int wifisignal = 0;
-String displaycurrenttimepluswifi;
 
 void turnOn()
 {
