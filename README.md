@@ -46,4 +46,6 @@
   - https://community.blynk.cc/t/error-isr-not-in-iram/37426/19 - Interrupt Issue for button
   - https://community.blynk.cc/t/automatic-yard-sprinkler-system/46281 - LED Status idea 
   - https://community.blynk.cc/t/time-input-widget-and-eventor/14868/17 - Timer Code
+  - https://everythingsmarthome.co.uk/howto/how-to-flash-custom-firmware-to-a-sonoff-basic/ - How to Flash Firmware
+  - https://medium.com/@jeffreyroshan/flashing-a-custom-firmware-to-sonoff-wifi-switch-with-arduino-ide-402e5a2f77b - How to Flash Firmware
   
